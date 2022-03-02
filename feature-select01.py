@@ -1,0 +1,176 @@
+from sklearn import metrics
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import time
+
+# clean data first
+train = pd.read_csv('cell2celltrain_Small_6k.csv')
+
+# shape of the data
+col_num, row_num = train.shape
+
+print(train.describe())
+time.sleep(1)
+
+# label end churn data as either 0 or 1
+train['Churn'].replace(to_replace='Yes', value=1, inplace=True)
+train['Churn'].replace(to_replace='No',  value=0, inplace=True)
+
+def describe_unique_data(train):
+    # categoric features
+    for i in train.columns:
+        if train[i].dtype == 'object':
+            print(pd.DataFrame(train[i].value_counts()))
+
+
+def describe_total_unique_data(df):
+    for col in df.columns:
+        total_unique_values = len(df[col].unique())
+        print(f'column {col} has {total_unique_values} unique values in total')
+        print(f'these values are {df[col].unique()}')
+
+
+# handling missing values in each columns
+unknown_values = ['?', 'Unknown', 'Other']
+for i in unknown_values:
+    train = train.replace(i, np.nan)
+
+# initial data exploration wshow occupation mostly fails into 'Other'
+# this means that it can be ignored
+# initial data analysis also shown that handset price are mostly unknown, therefore it will not be considered either
+# this goes for prizmcode as well
+print('columns contain null values are: ', train.columns[train.isnull().any()])
+
+
+def fliter_large_missing_values(df):
+    print("this function prints out the total number of null values")
+    col_to_drop = []
+    FLITER_VAL = 30  # amount we allow data to be missing in percentage
+    for col in df.columns:
+        if df[col].isnull().sum() != 0:
+            missing_percent = (df[col].isnull().sum() / col_num) * 100
+            print(col, df[col].isnull().sum(),
+                  '{:.2f}%'.format(missing_percent))
+            if missing_percent > FLITER_VAL:
+                col_to_drop.append(col)
+    return col_to_drop
+
+
+# drop all the large missing values
+col_to_drop = fliter_large_missing_values(train)
+print(f'columns with large amount of missing data are {col_to_drop}')
+print('dropping the columns now')
+df = train.drop(col_to_drop, axis=1)
+# describe new data
+describe_total_unique_data(df)
+
+# put dfata into numerical and catagorical
+# initial analysis show dataset only have float or object type
+categoricals = list()
+numericals = list()
+for x in df.columns:
+    if df[x].dtype == 'object':
+        categoricals.append(x)
+    else:
+        numericals.append(x)
+
+print(categoricals, '\n', numericals)
+
+# for numerical data we will analyze correlation
+# we use pearson's r for correlation analysis; the result is to filter out feature that are way to correlated to each other
+# it will form a matrix by comparing each column to each other to get the correlation value
+# we loop through the dataframe to filter out columns with big correlation
+correlated_features = set()
+correlation_matrix = df[numericals].corr()
+R_VALUE = 0.7
+for i in range(len(correlation_matrix.columns)):
+    for j in range(i):
+        if abs(correlation_matrix.iloc[i, j]) > R_VALUE:
+            colname1 = correlation_matrix.columns[i]
+            colname2 = correlation_matrix.columns[j]
+            print (correlation_matrix.columns[i] + ' and ' + correlation_matrix.columns[j])
+            if colname1 != 'Churn' and colname2 != 'Churn':
+                if abs(correlation_matrix['Churn'][colname1]) > abs(correlation_matrix['Churn'][colname2]):
+                    correlated_features.add(colname2)
+                else:
+                    correlated_features.add(colname1)
+print(correlated_features)
+df.drop(correlated_features, axis=1, inplace=True)
+
+
+# catagorize data into feature and results
+# we will first use one-hot encoding to convert catagorical data into numerical data
+def to_numeric(s):
+    if s == 'Yes': 
+        return 1
+    elif s == "No":
+        return 0
+    else:
+        return -1
+
+for col in df.columns:
+    if df[col].dtype == 'object':
+        if len(df[col].unique()) <= 2:
+            df[col] = df[col].apply(to_numeric)
+
+describe_total_unique_data(df)
+
+df_dummies = pd.get_dummies(df, drop_first=True)
+
+
+X = df_dummies.drop(['Churn'], axis=1)
+Y = df_dummies['Churn']
+
+
+# numeric_features = ['HasCreditCard',
+#                     'RespondsToMailOffers',
+#                     'RetentionOffersAccepted',
+#                     'OptOutMailings',
+#                     'MadeCallToRetentionTeam'
+#                     ]
+# # catagorize one-hot encoding
+# categorical_features = ['CreditRating']
+
+# # convert yes or no values into numeric features
+
+
+
+
+# for f in numeric_features:
+#     df[f] = df[f].apply(to_numeric)
+
+# for f in numeric_features:
+#     print(f'now feature {f} have unique value of {df[f].unique()}')
+
+# # catagorize yes and no data
+# print(" list of yes and no columns: ", numeric_features)
+
+
+# # catagorize one-hot encoding
+# categorical_features = ['CreditRating']
+# df = pd.get_dummies(df, columns=categorical_features, prefix=None)
+
+# df= df.replace(to_replace='?', value=np.nan)
+# df= df.replace(to_replace='Other', value=np.nan)
+# df = df.dropna(axis='columns')
+
+# print('new columns are: ', df.columns)
+# # train spilt and train data
+# X = df.drop(labels='Churn', axis=1)
+# Y = df.Churn
+# print(X.shape, Y.shape)
+# X_train, X_test, y_train, y_test = train_test_split(
+#     X, Y, test_size=0.5, random_state=42)
+
+
+# model = LogisticRegression()
+# model.fit(X_train, y_train)
+
+# time.sleep(3)
+
+# prediction_test = model.predict(X_test)  # predicted result
+# # Print the prediction accuracy in comparsion to actual values
+# print(' the accuracy is:', metrics.accuracy_score(y_test, prediction_test))
