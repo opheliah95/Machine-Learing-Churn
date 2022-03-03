@@ -18,7 +18,18 @@ time.sleep(1)
 # label end churn data as either 0 or 1
 train['Churn'].replace(to_replace='Yes', value=1, inplace=True)
 train['Churn'].replace(to_replace='No',  value=0, inplace=True)
-train['MonthlyRevenue'] = pd.to_numeric(train['MonthlyRevenue'], errors='coerce') # will convert any ? into nan
+
+# convert all dataset value that should be float from string
+def check_numeric(val):
+    return val.isnumeric()
+
+for col in train.columns:
+    if train[col].dtype == 'object':
+        max_val_1, max_val_2 = train[col].value_counts()[:2].index.tolist()
+        if check_numeric(max_val_1) or check_numeric(max_val_2):
+            train[col] = pd.to_numeric(train[col], errors='coerce') # will convert any ? into nan
+            print(f'{col} contains numeric value {max_val_1} with max occurance')
+
 
 def describe_unique_data(train):
     # categoric features
@@ -125,6 +136,7 @@ for feature in categoricals:
     if len(df[feature].unique()) / df.shape[0] > 0.5:
         print('big feature is: ', feature)
         df.drop([feature], axis=1)
+print(f'cleaned all big features, now the shape is {df.shape}')
 df_dummies = pd.get_dummies(df, drop_first=True)
 
 
