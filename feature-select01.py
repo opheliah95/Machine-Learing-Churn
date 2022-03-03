@@ -21,7 +21,7 @@ train['Churn'].replace(to_replace='No',  value=0, inplace=True)
 
 # convert all dataset value that should be float from string
 def check_numeric(val):
-    return val.isnumeric()
+    return val.replace('.','',1).isnumeric()
 
 for col in train.columns:
     if train[col].dtype == 'object':
@@ -148,10 +148,10 @@ print(X.info(memory_usage = "deep"))
 # preprocessing data to make it standardized
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 features = X.columns.values
-scaler =  MinMaxScaler()
-X=pd.DataFrame(scaler.fit_transform(X))
-# X = pd.DataFrame(scaler.transform(X))
-# X.columns = features
+scaler = StandardScaler()
+scaler.fit(X)
+X = pd.DataFrame(scaler.transform(X))
+X.columns = features
 
 print('the head of dataframe is: ', X.head())
 print(X.shape)
