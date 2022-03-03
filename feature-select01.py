@@ -18,6 +18,7 @@ time.sleep(1)
 # label end churn data as either 0 or 1
 train['Churn'].replace(to_replace='Yes', value=1, inplace=True)
 train['Churn'].replace(to_replace='No',  value=0, inplace=True)
+train['MonthlyRevenue'] = pd.to_numeric(train['MonthlyRevenue'], errors='coerce') # will convert any ? into nan
 
 def describe_unique_data(train):
     # categoric features
@@ -118,13 +119,30 @@ for col in df.columns:
 
 describe_total_unique_data(df)
 
+# eliminate categorical features that have too many unique values
+# that is more than half of the values are unique, i.e. this case we will have to drop the column
+for feature in categoricals:
+    if len(df[feature].unique()) / df.shape[0] > 0.5:
+        print('big feature is: ', feature)
+        df.drop([feature], axis=1)
 df_dummies = pd.get_dummies(df, drop_first=True)
 
 
 X = df_dummies.drop(['Churn'], axis=1)
 Y = df_dummies['Churn']
 
+print(X.info(memory_usage = "deep"))
 
+# preprocessing data to make it standardized
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+features = X.columns.values
+scaler =  MinMaxScaler()
+X=pd.DataFrame(scaler.fit_transform(X))
+# X = pd.DataFrame(scaler.transform(X))
+# X.columns = features
+
+print('the head of dataframe is: ', X.head())
+print(X.shape)
 # numeric_features = ['HasCreditCard',
 #                     'RespondsToMailOffers',
 #                     'RetentionOffersAccepted',
