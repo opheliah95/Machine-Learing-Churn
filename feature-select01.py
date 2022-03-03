@@ -146,54 +146,21 @@ Y = df_dummies['Churn']
 print(X.info(memory_usage = "deep"))
 
 # preprocessing data to make it standardized
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+# minmaxscaler is best for data that assume no normal distribution is found is data
+from sklearn.preprocessing import MinMaxScaler
 features = X.columns.values
-scaler = StandardScaler()
+scaler = MinMaxScaler()
 scaler.fit(X)
 X = pd.DataFrame(scaler.transform(X))
 X.columns = features
 
+# some descriptive data for our final dataset
 print('the head of dataframe is: ', X.head())
 print(X.shape)
-# numeric_features = ['HasCreditCard',
-#                     'RespondsToMailOffers',
-#                     'RetentionOffersAccepted',
-#                     'OptOutMailings',
-#                     'MadeCallToRetentionTeam'
-#                     ]
-# # catagorize one-hot encoding
-# categorical_features = ['CreditRating']
+print(X.describe())
 
-# # convert yes or no values into numeric features
-
-
-
-
-# for f in numeric_features:
-#     df[f] = df[f].apply(to_numeric)
-
-# for f in numeric_features:
-#     print(f'now feature {f} have unique value of {df[f].unique()}')
-
-# # catagorize yes and no data
-# print(" list of yes and no columns: ", numeric_features)
-
-
-# # catagorize one-hot encoding
-# categorical_features = ['CreditRating']
-# df = pd.get_dummies(df, columns=categorical_features, prefix=None)
-
-# df= df.replace(to_replace='?', value=np.nan)
-# df= df.replace(to_replace='Other', value=np.nan)
-# df = df.dropna(axis='columns')
-
-# print('new columns are: ', df.columns)
-# # train spilt and train data
-# X = df.drop(labels='Churn', axis=1)
-# Y = df.Churn
-# print(X.shape, Y.shape)
-# X_train, X_test, y_train, y_test = train_test_split(
-#     X, Y, test_size=0.5, random_state=42)
+# train spilt and train data. 40 percent for training 60 percent for testing
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4, random_state=42)
 
 
 # model = LogisticRegression()
