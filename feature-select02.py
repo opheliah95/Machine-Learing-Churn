@@ -31,12 +31,15 @@ for col in train.columns:
             print(f'{col} contains numeric value {max_val_1} with max occurance')
 
 
-def describe_unique_data(train):
+def describe_unique_catagorical_data(train):
     # categoric features
     for i in train.columns:
         if train[i].dtype == 'object':
             print(pd.DataFrame(train[i].value_counts()))
 
+def describe_unique_data(train):
+    for i in train.columns:
+            print(pd.DataFrame(train[i].value_counts()))
 
 def describe_total_unique_data(df):
     for col in df.columns:
@@ -79,8 +82,6 @@ col_to_drop = fliter_large_missing_values(train)
 print(f'columns with large amount of missing data are {col_to_drop}')
 print('dropping the columns now')
 df = train.drop(col_to_drop, axis=1)
-# describe new data
-describe_total_unique_data(df)
 
 # put dfata into numerical and catagorical
 # initial analysis show dataset only have float or object type
@@ -91,8 +92,6 @@ for x in df.columns:
         categoricals.append(x)
     else:
         numericals.append(x)
-
-print(categoricals, '\n', numericals)
 
 # for numerical data we will analyze correlation
 # we use pearson's r for correlation analysis; the result is to filter out feature that are way to correlated to each other
@@ -106,13 +105,12 @@ for i in range(len(correlation_matrix.columns)):
         if abs(correlation_matrix.iloc[i, j]) > R_VALUE:
             colname1 = correlation_matrix.columns[i]
             colname2 = correlation_matrix.columns[j]
-            print (correlation_matrix.columns[i] + ' and ' + correlation_matrix.columns[j])
+            # print (correlation_matrix.columns[i] + ' and ' + correlation_matrix.columns[j])
             if colname1 != 'Churn' and colname2 != 'Churn':
                 if abs(correlation_matrix['Churn'][colname1]) > abs(correlation_matrix['Churn'][colname2]):
                     correlated_features.add(colname2)
                 else:
                     correlated_features.add(colname1)
-print(correlated_features)
 df.drop(correlated_features, axis=1, inplace=True)
 
 
@@ -131,7 +129,7 @@ for col in df.columns:
         if len(df[col].unique()) <= 2:
             df[col] = df[col].apply(to_numeric)
 
-describe_total_unique_data(df)
+
 
 # eliminate categorical features that have too many unique values
 # that is more than 5% of the values are unique, i.e. this case we will have to drop the column
@@ -141,7 +139,10 @@ for feature in categoricals:
         df = df.drop([feature], axis=1)
 print(f'cleaned all big features, now the shape is {df.shape}')
 
-
+# drop unrelated data manually
+df = df.drop(['NonUSTravel', 'TruckOwner', 'RVOwner', 'OwnsComputer', 'ChildrenInHH', 'OwnsMotorcycle', 'UniqueSubs'], axis=1)
+df = df.drop(['NewCellphoneUser', 'NotNewCellphoneUser'], axis=1)
+df = df.drop(['HandsetRefurbished', 'HandsetWebCapable', 'HandsetModels', 'CurrentEquipmentDays'], axis=1)
 # encoding catagorical data
 df_dummies = pd.get_dummies(df, drop_first=True)
 print(df_dummies.columns)
@@ -185,7 +186,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4, random_
 from sklearn import svm
 
 # Create a svm Classifier
-clf = svm.SVC(kernel='linear') # Linear Kernel
+clf = svm.SVC(kernel='poly') # Linear Kernel
 
 # Train the model using the training sets
 clf.fit(X_train, y_train)
