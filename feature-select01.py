@@ -44,6 +44,9 @@ def describe_total_unique_data(df):
         print(f'column {col} has {total_unique_values} unique values in total')
         print(f'these values are {df[col].unique()}')
 
+def debug_nan(df):
+    for i in df.columns:
+        print(f'in column {i} there is a total of {df[i].isna().sum()} null values')
 
 # handling missing values in each columns
 unknown_values = ['?', 'Unknown', 'Other']
@@ -137,11 +140,26 @@ for feature in categoricals:
         print('big feature is: ', feature)
         df.drop([feature], axis=1)
 print(f'cleaned all big features, now the shape is {df.shape}')
+
+
+# encoding catagorical data
 df_dummies = pd.get_dummies(df, drop_first=True)
 
+# Impute missing values
+# use this function to debug any missing values: debug_nan(df_dummies)
 
-X = df_dummies.drop(['Churn'], axis=1)
-Y = df_dummies['Churn']
+from sklearn.impute import SimpleImputer
+from numpy import isnan
+imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
+# transform the dataset
+df_cleaned = pd.DataFrame(imputer.fit_transform(df_dummies))
+# count the number of NaN values in each column
+df_cleaned.columns=df_dummies.columns
+df_cleaned.index=df_dummies.index
+
+
+X = df_cleaned.drop(['Churn'], axis=1)
+Y = df_cleaned['Churn']
 
 print(X.info(memory_usage = "deep"))
 
@@ -162,12 +180,19 @@ print(X.describe())
 # train spilt and train data. 40 percent for training 60 percent for testing
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4, random_state=42)
 
+# apply svm as our machine learing model
+from sklearn import svm
 
-# model = LogisticRegression()
-# model.fit(X_train, y_train)
+# Create a svm Classifier
+clf = svm.SVC(kernel='linear') # Linear Kernel
 
-# time.sleep(3)
+# Train the model using the training sets
+clf.fit(X_train, y_train)
 
-# prediction_test = model.predict(X_test)  # predicted result
-# # Print the prediction accuracy in comparsion to actual values
-# print(' the accuracy is:', metrics.accuracy_score(y_test, prediction_test))
+# Predict the response for test dataset
+y_pred = clf.predict(X_test)
+
+
+# Print the prediction accuracy in comparsion to actual values
+from sklearn import metrics
+print(' the accuracy is:', metrics.accuracy_score(y_test, y_pred))
