@@ -141,8 +141,8 @@ print(f'cleaned all big features, now the shape is {df.shape}')
 
 # drop unrelated data manually
 df = df.drop(['NonUSTravel', 'TruckOwner', 'RVOwner', 'OwnsComputer', 'ChildrenInHH', 'OwnsMotorcycle', 'UniqueSubs'], axis=1)
-# df = df.drop(['NewCellphoneUser', 'NotNewCellphoneUser'], axis=1)
-# df = df.drop(['HandsetRefurbished', 'HandsetWebCapable', 'HandsetModels', 'CurrentEquipmentDays'], axis=1)
+df = df.drop(['NewCellphoneUser', 'NotNewCellphoneUser'], axis=1)
+df = df.drop(['HandsetRefurbished', 'HandsetWebCapable', 'HandsetModels', 'CurrentEquipmentDays'], axis=1)
 # encoding catagorical data
 df_dummies = pd.get_dummies(df, drop_first=True)
 print(df_dummies.columns)
@@ -165,32 +165,31 @@ Y = df_cleaned['Churn']
 
 print(X.info(memory_usage = "deep"))
 
-# preprocessing data to make it standardized
-# minmaxscaler is best for data that assume no normal distribution is found is data
-from sklearn.preprocessing import MinMaxScaler
-features = X.columns.values
-scaler = MinMaxScaler()
-scaler.fit(X)
-X = pd.DataFrame(scaler.transform(X))
-X.columns = features
+# # preprocessing data to make it standardized
+# # minmaxscaler is best for data that assume no normal distribution is found is data
+# from sklearn.preprocessing import MinMaxScaler
+# features = X.columns.values
+# scaler = MinMaxScaler()
+# scaler.fit(X)
+# X = pd.DataFrame(scaler.transform(X))
+# X.columns = features
 
-# some descriptive data for our final dataset
-print('the head of dataframe is: ', X.head())
-print(X.shape)
-print(X.describe())
-
+# # some descriptive data for our final dataset
+# print('the head of dataframe is: ', X.head())
+# print(X.shape)
+# print(X.describe())
 
 
 # train spilt and train data. 40 percent for training 60 percent for testing
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
 print(X_train.head(10))
 # apply svm as our machine learing model
 from sklearn import svm
 
 # Create a svm Classifier
-clf = svm.SVC(gamma='auto', kernel="linear") # Linear Kernel
+clf = svm.SVC(gamma='auto') # Linear Kernel
 
-
+print('model added')
 # add genetic serach algorithm
 from sklearn_genetic import GAFeatureSelectionCV
 from sklearn import metrics
@@ -198,24 +197,31 @@ from sklearn import metrics
 evolved_estimator = GAFeatureSelectionCV(
     estimator=clf,
     scoring="accuracy",
-    population_size=10,
-    generations=20,
+    population_size=30,
+    generations=30,
     n_jobs=-1,
-    cv=3,
-    elitism=True,
-    keep_top_k=2)
+    verbose=True)
 
+print('estimator created')
 # Train and select the features
 evolved_estimator.fit(X_train, y_train)
 
+print('estimator fitted')
 # Features selected by the algorithm
 features = evolved_estimator.best_features_
 print(features)
 
+# filter the feature by mapping the bools to existing columns
+arr = features.tolist()
+new_col = X.columns.to_numpy()
+best_fit_cols = new_col[arr].tolist()
+final_train_df = X_test.loc[:, best_fit_cols]
+print(final_train_df.columns)
+
 # Predict only with the subset of selected features
-y_predict_ga = evolved_estimator.predict(X_test)
+y_predict_ga = evolved_estimator.predict(final_train_df)
 ga_accuracy = metrics.accuracy_score(y_test,y_predict_ga)
-print('accaracy after fitted with GA: ', ga_accuracy)
+print('accuracy after fitted with GA: ', ga_accuracy)
 
 # Train the model using the training sets, with default svm classifier
 clf.fit(X_train, y_train)
