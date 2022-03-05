@@ -165,23 +165,8 @@ Y = df_cleaned['Churn']
 
 print(X.info(memory_usage = "deep"))
 
-# # preprocessing data to make it standardized
-# # minmaxscaler is best for data that assume no normal distribution is found is data
-# from sklearn.preprocessing import MinMaxScaler
-# features = X.columns.values
-# scaler = MinMaxScaler()
-# scaler.fit(X)
-# X = pd.DataFrame(scaler.transform(X))
-# X.columns = features
-
-# # some descriptive data for our final dataset
-# print('the head of dataframe is: ', X.head())
-# print(X.shape)
-# print(X.describe())
-
-
 # train spilt and train data. 40 percent for training 60 percent for testing
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
 print(X_train.head(10))
 # apply svm as our machine learing model
 from sklearn import svm
@@ -230,4 +215,4 @@ clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 
 # Print the prediction accuracy in comparsion to actual values
-print(' the accuracy is:', metrics.accuracy_score(y_test, y_pred))
+print('the accuracy from svm is:', metrics.accuracy_score(y_test, y_pred))
