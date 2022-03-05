@@ -216,3 +216,8 @@ y_pred = clf.predict(X_test)
 
 # Print the prediction accuracy in comparsion to actual values
 print('the accuracy from svm is:', metrics.accuracy_score(y_test, y_pred))
+
+# print accuracy with f1_score
+from sklearn.metrics import f1_score
+f1_score=f1_score(y_test, y_pred, average=None)
+print(' f1 score is ', f1_score)

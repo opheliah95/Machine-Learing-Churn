@@ -18,7 +18,8 @@ time.sleep(1)
 # label end churn data as either 0 or 1
 train['Churn'].replace(to_replace='Yes', value=1, inplace=True)
 train['Churn'].replace(to_replace='No',  value=0, inplace=True)
-
+train=train.drop(['CreditRating', 'AgeHH1', 'AgeHH2', 'AdjustmentsToCreditRating', 'BuysViaMailOrder', 'ReferralsMadeBySubscriber'], axis=1)
+train=train.drop(['RespondsToMailOffers', 'OptOutMailings', 'RoamingCalls', 'PercChangeMinutes'], axis=1)
 # convert all dataset value that should be float from string
 def check_numeric(val):
     return val.replace('.','',1).isnumeric()
@@ -187,7 +188,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33, random
 from sklearn import svm
 
 # Create a svm Classifier
-clf = svm.SVC(kernel='poly') # Linear Kernel
+clf = svm.SVC(kernel='linear') # Linear Kernel
 
 # Train the model using the training sets
 clf.fit(X_train, y_train)
@@ -199,3 +200,8 @@ y_pred = clf.predict(X_test)
 # Print the prediction accuracy in comparsion to actual values
 from sklearn import metrics
 print(' the accuracy is:', metrics.accuracy_score(y_test, y_pred))
+
+# print accuracy with f1_score
+from sklearn.metrics import f1_score
+f1_score=f1_score(y_test, y_pred, average=None)
+print(' f1 score is ', f1_score)
