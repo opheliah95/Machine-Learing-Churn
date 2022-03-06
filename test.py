@@ -50,7 +50,7 @@ print(" list of yes and no columns: ", numeric_features)
 
 
 # catagorize one-hot encoding
-categorical_features = ['Occupation', 'CreditRating', 'ServiceArea']
+categorical_features = ['Occupation', 'CreditRating']
 df = pd.get_dummies(df, columns=categorical_features, prefix=None)
 
 df= df.replace(to_replace='?', value=np.nan)
