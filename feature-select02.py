@@ -1,3 +1,6 @@
+from sklearn import svm
+from numpy import isnan
+from sklearn.impute import SimpleImputer
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
@@ -18,17 +21,23 @@ time.sleep(1)
 # label end churn data as either 0 or 1
 train['Churn'].replace(to_replace='Yes', value=1, inplace=True)
 train['Churn'].replace(to_replace='No',  value=0, inplace=True)
-train=train.drop(['CreditRating', 'AgeHH1', 'AgeHH2', 'AdjustmentsToCreditRating', 'BuysViaMailOrder', 'ReferralsMadeBySubscriber'], axis=1)
-train=train.drop(['RespondsToMailOffers', 'OptOutMailings', 'RoamingCalls', 'PercChangeMinutes'], axis=1)
+train = train.drop(['CreditRating', 'AgeHH1', 'AgeHH2', 'AdjustmentsToCreditRating',
+                   'BuysViaMailOrder', 'ReferralsMadeBySubscriber'], axis=1)
+train = train.drop(['RespondsToMailOffers', 'OptOutMailings',
+                   'RoamingCalls', 'PercChangeMinutes'], axis=1)
 # convert all dataset value that should be float from string
+
+
 def check_numeric(val):
-    return val.replace('.','',1).isnumeric()
+    return val.replace('.', '', 1).isnumeric()
+
 
 for col in train.columns:
     if train[col].dtype == 'object':
         max_val_1, max_val_2 = train[col].value_counts()[:2].index.tolist()
         if check_numeric(max_val_1) or check_numeric(max_val_2):
-            train[col] = pd.to_numeric(train[col], errors='coerce') # will convert any ? into nan
+            # will convert any ? into nan
+            train[col] = pd.to_numeric(train[col], errors='coerce')
             print(f'{col} contains numeric value {max_val_1} with max occurance')
 
 
@@ -38,9 +47,11 @@ def describe_unique_catagorical_data(train):
         if train[i].dtype == 'object':
             print(pd.DataFrame(train[i].value_counts()))
 
+
 def describe_unique_data(train):
     for i in train.columns:
-            print(pd.DataFrame(train[i].value_counts()))
+        print(pd.DataFrame(train[i].value_counts()))
+
 
 def describe_total_unique_data(df):
     for col in df.columns:
@@ -48,9 +59,12 @@ def describe_total_unique_data(df):
         print(f'column {col} has {total_unique_values} unique values in total')
         print(f'these values are {df[col].unique()}')
 
+
 def debug_nan(df):
     for i in df.columns:
-        print(f'in column {i} there is a total of {df[i].isna().sum()} null values')
+        print(
+            f'in column {i} there is a total of {df[i].isna().sum()} null values')
+
 
 # handling missing values in each columns
 unknown_values = ['?', 'Unknown', 'Other']
@@ -118,18 +132,18 @@ df.drop(correlated_features, axis=1, inplace=True)
 # catagorize data into feature and results
 # we will first use one-hot encoding to convert catagorical data into numerical data
 def to_numeric(s):
-    if s == 'Yes': 
+    if s == 'Yes':
         return 1
     elif s == "No":
         return 0
     else:
         return -1
 
+
 for col in df.columns:
     if df[col].dtype == 'object':
         if len(df[col].unique()) <= 2:
             df[col] = df[col].apply(to_numeric)
-
 
 
 # eliminate categorical features that have too many unique values
@@ -141,9 +155,11 @@ for feature in categoricals:
 print(f'cleaned all big features, now the shape is {df.shape}')
 
 # drop unrelated data manually
-df = df.drop(['NonUSTravel', 'TruckOwner', 'RVOwner', 'OwnsComputer', 'ChildrenInHH', 'OwnsMotorcycle', 'UniqueSubs'], axis=1)
+df = df.drop(['NonUSTravel', 'TruckOwner', 'RVOwner', 'OwnsComputer',
+             'ChildrenInHH', 'OwnsMotorcycle', 'UniqueSubs'], axis=1)
 df = df.drop(['NewCellphoneUser', 'NotNewCellphoneUser'], axis=1)
-df = df.drop(['HandsetRefurbished', 'HandsetWebCapable', 'HandsetModels', 'CurrentEquipmentDays'], axis=1)
+df = df.drop(['HandsetRefurbished', 'HandsetWebCapable',
+             'HandsetModels', 'CurrentEquipmentDays'], axis=1)
 # encoding catagorical data
 df_dummies = pd.get_dummies(df, drop_first=True)
 print(df_dummies.columns)
@@ -152,43 +168,27 @@ print(df_dummies.columns)
 # Impute missing values
 # use this function to debug any missing values: debug_nan(df_dummies)
 
-from sklearn.impute import SimpleImputer
-from numpy import isnan
 imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
 # transform the dataset
 df_cleaned = pd.DataFrame(imputer.fit_transform(df_dummies))
 # count the number of NaN values in each column
-df_cleaned.columns=df_dummies.columns
-df_cleaned.index=df_dummies.index
+df_cleaned.columns = df_dummies.columns
+df_cleaned.index = df_dummies.index
 
 
 X = df_cleaned.drop(['Churn'], axis=1)
 Y = df_cleaned['Churn']
 
-print(X.info(memory_usage = "deep"))
-
-# # preprocessing data to make it standardized
-# # minmaxscaler is best for data that assume no normal distribution is found is data
-# from sklearn.preprocessing import MinMaxScaler
-# features = X.columns.values
-# scaler = MinMaxScaler()
-# scaler.fit(X)
-# X = pd.DataFrame(scaler.transform(X))
-# X.columns = features
-
-# # some descriptive data for our final dataset
-# print('the head of dataframe is: ', X.head())
-# print(X.shape)
-# print(X.describe())
+print(X.info(memory_usage="deep"))
 
 # train spilt and train data. 40 percent for training 60 percent for testing
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.33, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, Y, test_size=0.33, random_state=42)
 
 # apply svm as our machine learing model
-from sklearn import svm
 
 # Create a svm Classifier
-clf = svm.SVC(kernel='linear') # Linear Kernel
+clf = svm.SVC(kernel='linear')  # Linear Kernel
 
 # Train the model using the training sets
 clf.fit(X_train, y_train)
@@ -196,12 +196,6 @@ clf.fit(X_train, y_train)
 # Predict the response for test dataset
 y_pred = clf.predict(X_test)
 
-
 # Print the prediction accuracy in comparsion to actual values
-from sklearn import metrics
-print(' the accuracy is:', metrics.accuracy_score(y_test, y_pred))
-
-# print accuracy with f1_score
-from sklearn.metrics import f1_score
-f1_score=f1_score(y_test, y_pred, average=None)
-print(' f1 score is ', f1_score)
+print('the accuracy for unoptimized svm is:',
+      metrics.accuracy_score(y_test, y_pred))

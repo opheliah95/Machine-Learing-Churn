@@ -13,9 +13,10 @@ print(df.columns)
 shape = df.shape
 print(shape)
 
-time.sleep(2)
 # identify unique values in every column
 columns = list(df.columns)
+
+# create numeric_features
 numeric_features = []
 for col in columns:
     print(f"................start analyazing column {col}...................")
@@ -62,14 +63,22 @@ X = df.drop(labels='Churn', axis=1)
 Y = df.Churn
 print(X.shape, Y.shape)
 X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, test_size=0.5, random_state=42)
+    X, Y, test_size=0.33, random_state=42)
 
 
-model = LogisticRegression()
-model.fit(X_train, y_train)
+# apply svm as our machine learing model
+from sklearn import svm
 
-time.sleep(3)
+# Create a svm Classifier
+clf = svm.SVC(kernel='linear') # Linear Kernel
 
-prediction_test = model.predict(X_test)  # predicted result
+# Train the model using the training sets
+clf.fit(X_train, y_train)
+
+# Predict the response for test dataset
+y_pred = clf.predict(X_test)
+
+
 # Print the prediction accuracy in comparsion to actual values
-print(' the accuracy is:', metrics.accuracy_score(y_test, prediction_test))
+from sklearn import metrics
+print(' the accuracy is:', metrics.accuracy_score(y_test, y_pred))
